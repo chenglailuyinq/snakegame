@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnakeGame</title>
+    <script type="text/javascript">
+        var W, H, S = 40;
+        var snake = [];
+        var foods = [];
+        var keyCode = 0;
+        var point = 0;
+        var timer = NaN;
+        var ctx;
+        var img1;
+        var img2;
+
+        function init() {
+            // 修正：dcument -> document, field -> "field" (文字列として渡す)
+            var canvas = document.getElementById("field");
+            W = canvas.width / S;
+            H = canvas.height / S;
+            ctx = canvas.getContext('2d');
+            ctx.font = "40px meiryo";
+
+            snake.push(new Point(Math.floor(W / 2), Math.floor(H / 2)));
+
+            for (var i = 0; i < 10; i++) {
+                addFood();
+            }
+
+            img1 = new Image();
+            img1.src = "https://preview.imagemart.jp/3hJZj9xxF39u/afloimagemart_271534402.jpg";
+            img2 = new Image();
+            img2.src = "https://img.chenglailuyin.jp/logo.png";
+
+            window.onkeydown = keydown;
+
+            // 修正：文字列指定ではなく関数参照を推奨
+            timer = setInterval(main, 200);
+        }
+
+        function main() {
+            var x = snake[0].x;
+            var y = snake[0].y;
+
+            switch (keyCode) {
+                case 37: x--; break;
+                case 38: y--; break;
+                case 39: x++; break;
+                case 40: y++; break;
+                default: 
+                    paint();
+                    return;
+            }
+
+            // 修正：yの範囲判定を(y < 0 || y >= H)に修正
+            if (isHit(snake, x, y) || x < 0 || x >= W || y < 0 || y >= H) {
+                clearInterval(timer);
+                paint();
+                alert("Game Over! Score: " + point);
+                return;
+            }
+
+            snake.unshift(new Point(x, y));
+
+            // 修正：food -> foods (変数名ミス), point+10 -> point+=10
+            if (isHit(foods, x, y)) {
+                point += 10;
+                foods = foods.filter(function (p) { return (p.x != x || p.y != y); });
+                addFood(); // エサを食べたら補充
+            } else {
+                snake.pop();
+            }
+            paint();
+        }
+
+        function Point(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        function addFood() {
+            // 修正：While -> while (小文字)
+            while (true) {
+                var x = Math.floor(Math.random() * W);
+                var y = Math.floor(Math.random() * H);
+                if (isHit(foods, x, y) || isHit(snake, x, y)) continue;
+
+                foods.push(new Point(x, y));
+                break;
+            }
+        }
+
+        function keydown(event) {
+            // 反対方向への入力を防ぐロジックを追加するとより快適になります
+            keyCode = event.keyCode;
+        }
+
+        function paint() {
+            ctx.clearRect(0, 0, W * S, H * S);
+            // 修正：rab -> rgb
+            ctx.fillStyle = "rgb(255,0,0)";
+            ctx.fillText(point, S, S * 2);
+
+            // 描画位置の調整：(p.y+1)はテキストと被るのを避けるためであればOKですが、基本はp.y*S
+            foods.forEach(function (p) { ctx.drawImage(img2, p.x * S, p.y * S, S, S); });
+            snake.forEach(function (p) { ctx.drawImage(img1, p.x * S, p.y * S, S, S); });
+        }
+
+        function isHit(data, x, y) {
+            // 修正：Length -> length (小文字)
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].x == x && data[i].y == y) return true;
+            }
+            return false;
+        }
+    </script>
+</head>
+<body onload="init()">
+    <canvas id="field" width="800" height="800" style="background:rgb(204,204,204)"></canvas>
+</body>
+</html>
